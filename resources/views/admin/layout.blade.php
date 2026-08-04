@@ -5,9 +5,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>SkillCraft Admin — @yield('title','Dashboard')</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+@php
+  // Resolve the logged-in teacher's specialization (null for admin) so the
+  // whole CMS can shift its accent color per specialization.
+  $__specUser = session('admin_role') === 'teacher'
+      ? \App\Models\User::find(session('admin_id'))
+      : null;
+  $__spec = $__specUser?->specialization;
+
+  $__themeMap = [
+      'ict'     => ['#60a5fa', '#3b82f6', 'rgba(96,165,250,0.18)'],   // blue
+      'smaw'    => ['#fbbf24', '#f59e0b', 'rgba(251,191,36,0.18)'],   // amber (industrial)
+      'cookery' => ['#c084fc', '#a855f7', 'rgba(192,132,252,0.18)'],  // purple (home ec)
+  ];
+  [$__themeAccent, $__themeAccentDark, $__themeAccentSoft] = $__themeMap[$__spec] ?? ['#60a5fa', '#3b82f6', 'rgba(96,165,250,0.18)'];
+@endphp
 <style>
 :root {
-  --accent:  #60a5fa;
+  --accent:      {{ $__themeAccent }};
+  --accent-dark: {{ $__themeAccentDark }};
+  --accent-soft: {{ $__themeAccentSoft }};
   --accent2: #c084fc;
   --accent3: #34d399;
   --warn:    #fbbf24;
@@ -26,11 +43,9 @@ body {
   min-height: 100vh;
   display: flex;
   overflow-x: hidden;
-  /* School background full page */
   background:
-    linear-gradient(135deg,
-      rgba(5,10,20,0.78) 0%,
-      rgba(10,18,35,0.72) 100%),
+    linear-gradient(135deg, rgba(5,10,20,0.78) 0%, rgba(10,18,35,0.72) 100%),
+    linear-gradient(180deg, {{ $__themeAccentSoft }} 0%, transparent 45%),
     url('/images/juang_bg.png') center center / cover no-repeat fixed;
 }
 
@@ -38,21 +53,20 @@ body {
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.2); border-radius:99px; }
 
-/* ── SIDEBAR ──────────────────────────────────────────────────────── */
 .sidebar {
   width: 240px;
   min-height: 100vh;
-  /* Glass effect — school photo visible through sidebar */
   background: rgba(5,10,22,0.60);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-right: 1px solid rgba(255,255,255,0.12);
   display: flex;
   flex-direction: column;
-  padding: 28px 0;
+  padding: 28px 0 0;
   position: fixed;
   top:0; left:0; bottom:0;
   z-index: 100;
+  overflow-y: auto;
 }
 
 .logo {
@@ -67,7 +81,7 @@ body {
   height: 40px;
   border-radius: 10px;
   object-fit: cover;
-  box-shadow: 0 0 0 2px rgba(96,165,250,0.4);
+  box-shadow: 0 0 0 2px var(--accent-soft);
 }
 
 .logo-text {
@@ -115,9 +129,9 @@ body {
 }
 
 .nav-item.active {
-  background: rgba(96,165,250,0.18);
-  color: #93c5fd;
-  border: 1px solid rgba(96,165,250,0.25);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent-soft);
 }
 
 .nav-item .nav-icon {
@@ -132,8 +146,11 @@ body {
 
 .sidebar-footer {
   margin-top: auto;
-  padding: 16px 20px;
+  padding: 16px 20px 20px;
   border-top: 1px solid rgba(255,255,255,0.10);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .avatar {
@@ -149,12 +166,28 @@ body {
   color: #fff;
   flex-shrink: 0;
   font-family: 'Poppins', sans-serif;
-  box-shadow: 0 2px 10px rgba(96,165,250,0.3);
+  box-shadow: 0 2px 10px var(--accent-soft);
 }
 
 .admin-chip { display:flex; align-items:center; gap:10px; }
 
-/* ── MAIN ─────────────────────────────────────────────────────────── */
+.school-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 10px;
+  padding: 9px 12px;
+}
+.school-badge-name {
+  font-family: 'Poppins', sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
 .main {
   margin-left: 240px;
   flex: 1;
@@ -162,7 +195,6 @@ body {
   min-height: 100vh;
 }
 
-/* ── TOPBAR ───────────────────────────────────────────────────────── */
 .topbar {
   display: flex;
   align-items: center;
@@ -180,7 +212,6 @@ body {
 }
 .page-title span { color: var(--accent); }
 
-/* ── BUTTONS ──────────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -197,7 +228,7 @@ body {
 }
 
 .btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: #3b82f6; transform: translateY(-1px); }
+.btn-primary:hover { background: var(--accent-dark); transform: translateY(-1px); }
 
 .btn-danger {
   background: rgba(248,82,82,.15);
@@ -213,7 +244,6 @@ body {
 }
 .btn-ghost:hover { background: rgba(255,255,255,0.14); }
 
-/* ── PANELS / CARDS ───────────────────────────────────────────────── */
 .panel {
   background: rgba(255,255,255,0.08);
   backdrop-filter: blur(20px);
@@ -239,7 +269,6 @@ body {
   color: #ffffff;
 }
 
-/* ── TABLES ───────────────────────────────────────────────────────── */
 table { width:100%; border-collapse:collapse; }
 
 thead th {
@@ -267,7 +296,6 @@ tbody td {
   color: #e2e8f0;
 }
 
-/* ── BADGES ───────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -285,7 +313,6 @@ tbody td {
 .badge.orange { background:rgba(251,191,36,.20);  color:#fde68a; border:1px solid rgba(251,191,36,.3); }
 .badge.red    { background:rgba(248,113,113,.20); color:#fca5a5; border:1px solid rgba(248,113,113,.3); }
 
-/* ── FORMS ────────────────────────────────────────────────────────── */
 .form-group { margin-bottom:16px; }
 
 .form-label {
@@ -315,11 +342,10 @@ tbody td {
 .form-input::placeholder { color:rgba(255,255,255,0.35); }
 .form-input:focus {
   border-color: var(--accent);
-  background: rgba(96,165,250,0.08);
+  background: var(--accent-soft);
 }
 .form-input option { background: #0f172a; color:#fff; }
 
-/* ── ALERTS ───────────────────────────────────────────────────────── */
 .alert { padding:12px 16px; border-radius:10px; font-size:13px; margin-bottom:20px; }
 
 .alert-success {
@@ -333,7 +359,6 @@ tbody td {
   color: #fca5a5;
 }
 
-/* ── MODAL ────────────────────────────────────────────────────────── */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -378,7 +403,6 @@ tbody td {
 }
 .modal-close:hover { color:#fff; }
 
-/* ── HELPERS ──────────────────────────────────────────────────────── */
 .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
 
 .empty-state {
@@ -408,7 +432,18 @@ tbody td {
   border-color: var(--accent);
 }
 
-/* ── ANIMATIONS ───────────────────────────────────────────────────── */
+.live-dot {
+  display:inline-block; width:7px; height:7px; border-radius:50%;
+  background:var(--accent3); margin-right:6px; vertical-align:middle;
+  animation:pulse 2s infinite;
+}
+.status-dot {
+  display:inline-block; width:8px; height:8px; border-radius:50%;
+  flex-shrink:0;
+}
+.status-dot.online  { background:var(--accent3); box-shadow:0 0 8px var(--accent3); animation:pulse 2s infinite; }
+.status-dot.offline { background:rgba(255,255,255,0.25); }
+
 @keyframes fadeUp {
   from { opacity:0; transform:translateY(16px); }
   to   { opacity:1; transform:translateY(0); }
@@ -417,29 +452,10 @@ tbody td {
   0%,100% { opacity:1; }
   50%      { opacity:.4; }
 }
-
-/* ── SCHOOL BADGE ─────────────────────────────────────────────────── */
-.school-badge {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: rgba(255,255,255,0.10);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 10px;
-  padding: 8px 14px;
-}
-.school-badge-name {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  color: #ffffff;
-}
 </style>
 </head>
 <body>
 
-{{-- SIDEBAR --}}
 <aside class="sidebar">
   <div class="logo">
     <img src="{{ asset('images/skillcraft_logo.jpg') }}" alt="SkillCraft" class="logo-icon"/>
@@ -452,10 +468,20 @@ tbody td {
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       Dashboard
     </a>
+    <a href="{{ route('monitoring.index') }}" class="nav-item {{ request()->routeIs('monitoring*') ? 'active' : '' }}">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Live Monitoring
+    </a>
+    @if(session('admin_role') === 'admin')
     <a href="{{ route('players.index') }}" class="nav-item {{ request()->routeIs('players*') ? 'active' : '' }}">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Players
     </a>
+    <a href="{{ route('teachers.index') }}" class="nav-item {{ request()->routeIs('teachers*') ? 'active' : '' }}">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg>
+      Manage Teachers
+    </a>
+    @endif
   </div>
 
   <div class="nav-section">
@@ -502,7 +528,7 @@ tbody td {
     <div class="admin-chip">
       @if(session('admin_picture'))
         <img src="{{ asset('storage/'.session('admin_picture')) }}"
-             style="width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px rgba(96,165,250,0.4)"
+             style="width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--accent-soft)"
              alt="Admin"/>
       @else
         <div class="avatar">{{ strtoupper(substr(session('admin_name','A'),0,2)) }}</div>
@@ -512,11 +538,20 @@ tbody td {
           {{ session('admin_name','Admin') }}
         </div>
         <div style="font-size:10px;color:rgba(255,255,255,0.45);font-family:'Inter',sans-serif;margin-top:1px">
-          Administrator
+          {{ session('admin_role') === 'admin' ? 'Administrator' : 'Teacher' }}
         </div>
       </div>
     </div>
-    <form method="POST" action="{{ route('admin.logout') }}" style="margin-top:12px">
+
+    <div class="school-badge">
+      <svg style="width:15px;height:15px;color:var(--accent);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div>
+        <div style="font-size:9px;color:rgba(255,255,255,0.45);font-family:'Inter',sans-serif">Partner School</div>
+        <div class="school-badge-name">Juan G. Macaraeg NHS</div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.logout') }}">
       @csrf
       <button type="submit" class="btn btn-ghost" style="width:100%;justify-content:center;font-size:12.5px">
         <svg style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -526,19 +561,7 @@ tbody td {
   </div>
 </aside>
 
-{{-- MAIN --}}
 <main class="main">
-
-  {{-- School badge top right --}}
-  <div style="position:fixed;top:18px;right:26px;z-index:50">
-    <div class="school-badge">
-      <svg style="width:15px;height:15px;color:var(--accent);flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      <div>
-        <div style="font-size:9px;color:rgba(255,255,255,0.45);font-family:'Inter',sans-serif">Partner School</div>
-        <div class="school-badge-name">Juan G. Macaraeg NHS</div>
-      </div>
-    </div>
-  </div>
 
   @if(session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>

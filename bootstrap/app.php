@@ -17,9 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);
 
-        // Register admin.auth alias
+        // Register admin middleware aliases
         $middleware->alias([
-            'admin.auth' => \App\Http\Middleware\AdminAuthMiddleware::class,
+            'admin.auth'  => \App\Http\Middleware\AdminAuthMiddleware::class,
+            'scope.spec'  => \App\Http\Middleware\ScopeToSpecialization::class,
+            'admin.only'  => \App\Http\Middleware\AdminOnly::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

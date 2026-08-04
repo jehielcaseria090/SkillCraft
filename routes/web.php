@@ -10,6 +10,8 @@ use App\Http\Controllers\AssessmentPageController;
 use App\Http\Controllers\LoginLogController;
 use App\Http\Controllers\SurveyPageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\MonitoringController;
 use Illuminate\Support\Facades\Route;
 
 // ── Public: redirect root to login ──────────────────────────────────
@@ -23,20 +25,36 @@ Route::post('/admin/register',[AdminAuthController::class, 'register'])->name('a
 Route::post('/admin/logout',  [AdminAuthController::class, 'logout'])->name('admin.logout');
 
 // ── Protected admin routes ───────────────────────────────────────────
-Route::middleware('admin.auth')->group(function () {
+// admin.auth confirms login first, THEN scope.spec resolves cms_scoped_strand
+Route::middleware(['admin.auth', 'scope.spec'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Players
-    Route::get('/players',       [PlayerController::class, 'index'])->name('players.index');
-    Route::get('/players/{id}',  [PlayerController::class, 'show'])->name('players.show');
-    Route::delete('/players/{id}',[PlayerController::class, 'destroy'])->name('players.destroy');
+    // Live Monitoring — read access for everyone logged in; scope.spec
+    // restricts a teacher's view to students active in their own strand
+    Route::get('/monitoring', [MonitoringController::class, 'index'])->name('monitoring.index');
 
-    // Strands
-    Route::get('/strands',          [StrandPageController::class, 'index'])->name('strands.index');
-    Route::post('/strands',         [StrandPageController::class, 'store'])->name('strands.store');
-    Route::put('/strands/{id}',     [StrandPageController::class, 'update'])->name('strands.update');
-    Route::delete('/strands/{id}',  [StrandPageController::class, 'destroy'])->name('strands.destroy');
+    // Admin-only: Players + Manage Teachers
+    Route::middleware('admin.only')->group(function () {
+        Route::get('/players',        [PlayerController::class, 'index'])->name('players.index');
+        Route::get('/players/{id}',   [PlayerController::class, 'show'])->name('players.show');
+        Route::delete('/players/{id}',[PlayerController::class, 'destroy'])->name('players.destroy');
+
+        Route::get('/teachers',         [TeacherController::class, 'index'])->name('teachers.index');
+        Route::post('/teachers',        [TeacherController::class, 'store'])->name('teachers.store');
+        Route::delete('/teachers/{id}', [TeacherController::class, 'destroy'])->name('teachers.destroy');
+
+        // Strand writes: admin-only — — strands are structural (ICT / Home Economics /
+        // Industrial Arts), not specialization content, so teachers must not create,
+        // rename, or delete them. Reading strands (index) stays outside this group
+        // below so teachers can still view their own scoped strand.
+        Route::post('/strands',         [StrandPageController::class, 'store'])->name('strands.store');
+        Route::put('/strands/{id}',     [StrandPageController::class, 'update'])->name('strands.update');
+        Route::delete('/strands/{id}',  [StrandPageController::class, 'destroy'])->name('strands.destroy');
+    });
+
+    // Strands — read access for everyone logged in (teachers see only their own via scope.spec)
+    Route::get('/strands', [StrandPageController::class, 'index'])->name('strands.index');
 
     // Modules
     Route::get('/modules',          [ModulePageController::class, 'index'])->name('modules.index');

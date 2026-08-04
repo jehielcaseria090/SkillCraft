@@ -4,10 +4,13 @@
 
 <div class="topbar">
   <div class="page-title">Game <span>Strands</span></div>
+  @if(session('admin_role') === 'admin')
   <button class="btn btn-primary" onclick="document.getElementById('addModal').classList.add('open')">+ Add Strand</button>
+  @endif
 </div>
 
-{{-- Filter --}}
+{{-- Filter — only shown to admin, since teachers are already locked to one strand --}}
+@if(session('admin_role') === 'admin')
 <form method="GET" style="margin-bottom:20px;display:flex;align-items:center;gap:10px">
   <select class="form-input" style="width:220px;padding:8px 14px" name="strand_name" onchange="this.form.submit()">
     <option value="">-- All Strands --</option>
@@ -21,6 +24,7 @@
     <a href="{{ route('strands.index') }}" class="btn btn-ghost" style="padding:8px 16px">Clear</a>
   @endif
 </form>
+@endif
 
 <div class="panel">
   <div class="panel-header">
@@ -28,7 +32,7 @@
       @if(request('strand_name'))
         Showing: {{ request('strand_name') }}
       @else
-        All Strands
+        {{ session('admin_role') === 'admin' ? 'All Strands' : 'My Strand' }}
       @endif
     </div>
     <span style="font-size:12px;color:var(--muted)">{{ $strands->count() }} result(s)</span>
@@ -40,7 +44,9 @@
         <th>Strand Name</th>
         <th>Description</th>
         <th>Modules</th>
+        @if(session('admin_role') === 'admin')
         <th>Actions</th>
+        @endif
       </tr>
     </thead>
     <tbody>
@@ -54,6 +60,7 @@
         </td>
         <td style="color:var(--muted);font-size:13px">{{ $s->description }}</td>
         <td><span class="badge blue">{{ $s->modules_count }} modules</span></td>
+        @if(session('admin_role') === 'admin')
         <td>
           <div style="display:flex;gap:6px">
             <button class="btn btn-ghost" style="padding:5px 12px;font-size:12px"
@@ -66,10 +73,11 @@
             </form>
           </div>
         </td>
+        @endif
       </tr>
       @empty
       <tr>
-        <td colspan="5">
+        <td colspan="{{ session('admin_role') === 'admin' ? 5 : 4 }}">
           <div class="empty-state">
             <div class="empty-label">No strands found.</div>
           </div>
@@ -80,6 +88,7 @@
   </table>
 </div>
 
+@if(session('admin_role') === 'admin')
 {{-- Add Modal --}}
 <div class="modal-overlay" id="addModal" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal">
@@ -132,4 +141,5 @@ function openEdit(id, name, desc) {
   document.getElementById('editModal').classList.add('open');
 }
 </script>
+@endif
 @endsection
