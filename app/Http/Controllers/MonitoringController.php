@@ -72,4 +72,3 @@ class MonitoringController extends Controller
         ]);
     }
 }
-

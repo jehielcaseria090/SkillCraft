@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\Validator;
 class AuthController extends Controller
 {
     // POST /api/auth/register
+    // Unity registration always creates students — teacher/admin accounts
+    // are only ever created via the CMS (AdminAuthController::register for
+    // admin, TeacherController::store for teachers).
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -20,7 +23,6 @@ class AuthController extends Controller
             'email'          => 'required|email|unique:users,email',
             'username'       => 'required|string|unique:users,username',
             'password'       => 'required|string|min:8|confirmed',
-            'role'           => 'in:admin,teacher,student',
             'contact_number' => 'nullable|string',
         ]);
 
@@ -42,7 +44,7 @@ class AuthController extends Controller
             'password'              => $hashedPassword,
             'password_hash'         => $hashedPassword,
             'confirm_password_hash' => $hashedPassword,
-            'role'                  => $request->role ?? 'student',
+            'role'                  => 'student', // hardcoded — Unity registration never creates teacher/admin
             'contact_number'        => $request->contact_number,
         ]);
 
@@ -57,6 +59,8 @@ class AuthController extends Controller
 
     // POST /api/auth/login
     // Unity sends: { "username": "...", "password": "..." }
+    // Teachers and admins are blocked here — they are CMS-only accounts
+    // and must never be able to log into the game client.
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -83,6 +87,13 @@ class AuthController extends Controller
                 'success' => false,
                 'message' => 'Invalid username or password.',
             ], 401);
+        }
+
+        if ($user->role !== 'student') {
+            return response()->json([
+                'success' => false,
+                'message' => 'This account cannot be used to log into the game. Please use the SkillCraft admin portal instead.',
+            ], 403);
         }
 
         // Log login session
@@ -144,11 +155,11 @@ class AuthController extends Controller
             'email'           => $user->email        ?? '',
             'username'        => $user->username     ?? '',
             'role'            => $user->role         ?? '',
-            'profile_picture' => $user->profile_picture ?? '', // FIXED: was null
-            'contact_number'  => $user->contact_number  ?? '', // FIXED: was null
+            'profile_picture' => $user->profile_picture ?? '',
+            'contact_number'  => $user->contact_number  ?? '',
             'created_at'      => $user->created_at
                                  ? $user->created_at->toDateTimeString()
-                                 : '',                          // FIXED: simplified format
+                                 : '',
         ];
     }
 }

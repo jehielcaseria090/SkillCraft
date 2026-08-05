@@ -21,8 +21,12 @@ class AdminAuthController extends Controller
             'password' => 'required',
         ]);
 
+        // CMS login accepts admin AND teacher accounts — teachers use this
+        // exact same portal to monitor/manage their strand. Students are
+        // never allowed here; they only ever log in through the Unity
+        // client (AuthController@login in routes/api.php).
         $user = User::where('username', $request->username)
-                    ->where('role', 'admin')
+                    ->whereIn('role', ['admin', 'teacher'])
                     ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -34,7 +38,7 @@ class AdminAuthController extends Controller
             'admin_id'        => $user->user_id,
             'admin_name'      => $user->first_name . ' ' . $user->last_name,
             'admin_email'     => $user->email,
-            'admin_role'      => $user->role,
+            'admin_role'      => $user->role,          // 'admin' or 'teacher'
             'admin_picture'   => $user->profile_picture,
         ]);
 
@@ -48,6 +52,9 @@ class AdminAuthController extends Controller
 
     public function register(Request $request)
     {
+        // Unchanged: this public form only ever creates 'admin' accounts.
+        // Teacher accounts are created exclusively via TeacherController,
+        // which is gated behind admin.only middleware.
         $request->validate([
             'first_name' => 'required|string|max:100',
             'last_name'  => 'required|string|max:100',
