@@ -28,14 +28,28 @@
       {{ $player->first_name }} {{ $player->last_name }}
     </div>
     <div style="font-size:13px;color:var(--muted);margin-bottom:12px">{{ $player->email }}</div>
-    <span class="badge {{ $player->role === 'student' ? 'blue' : 'purple' }}" style="margin-bottom:20px;display:inline-flex">
-      {{ ucfirst($player->role) }}
-    </span>
+
+    <div style="display:flex;justify-content:center;gap:6px;margin-bottom:20px">
+      <span class="badge {{ $player->role === 'student' ? 'blue' : 'purple' }}">
+        {{ ucfirst($player->role) }}
+      </span>
+      @if($player->enrolled_strand)
+        <span class="badge {{ $player->enrolled_strand === 'ICT' ? 'blue' : ($player->enrolled_strand === 'Home Economics' ? 'purple' : 'orange') }}">
+          {{ $player->enrolled_strand }}
+        </span>
+      @else
+        <span class="badge" style="background:rgba(255,255,255,0.05);color:var(--muted)">Unassigned</span>
+      @endif
+    </div>
 
     <div style="border-top:1px solid var(--border);padding-top:16px;text-align:left">
       <div style="margin-bottom:10px">
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Username</div>
         <div style="font-size:13px">{{ $player->username ?? '—' }}</div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Enrolled Strand</div>
+        <div style="font-size:13px;font-weight:600;color:var(--accent)">{{ $player->enrolled_strand ?? 'Unassigned' }}</div>
       </div>
       <div style="margin-bottom:10px">
         <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">Contact</div>
@@ -50,6 +64,10 @@
         <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--accent)">{{ $assessments->count() }}</div>
       </div>
     </div>
+
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:16px" onclick="document.getElementById('editModal').classList.add('open')">
+      Edit Profile
+    </button>
   </div>
 
   {{-- Right: Stats --}}
@@ -206,7 +224,7 @@
 </div>
 
 {{-- Delete Player --}}
-<div style="margin-top:16px;display:flex;justify-content:flex-end">
+<div style="margin-top:16px;display:flex;justify-flex-end">
   <form method="POST" action="{{ route('players.destroy', $player->user_id) }}"
         onsubmit="return confirm('Delete {{ $player->first_name }}? This cannot be undone.')">
     @csrf @method('DELETE')
@@ -215,6 +233,35 @@
       Delete Player
     </button>
   </form>
+</div>
+
+{{-- Edit Modal for Player Detail View --}}
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('editModal').classList.remove('open')">×</button>
+    <div class="modal-title">Edit Student</div>
+    <form method="POST" action="{{ route('players.update', $player->user_id) }}">
+      @csrf @method('PUT')
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">First Name</label><input class="form-input" name="first_name" value="{{ $player->first_name }}" required/></div>
+        <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" name="last_name" value="{{ $player->last_name }}" required/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-input" type="email" name="email" value="{{ $player->email }}" required/></div>
+
+      <div class="form-group">
+        <label class="form-label">Strand / Specialization</label>
+        <select class="form-input" name="enrolled_strand">
+          <option value="" {{ empty($player->enrolled_strand) ? 'selected' : '' }}>Unassigned</option>
+          <option value="ICT" {{ $player->enrolled_strand === 'ICT' ? 'selected' : '' }}>ICT</option>
+          <option value="Home Economics" {{ $player->enrolled_strand === 'Home Economics' ? 'selected' : '' }}>Home Economics</option>
+          <option value="Industrial Arts" {{ $player->enrolled_strand === 'Industrial Arts' ? 'selected' : '' }}>Industrial Arts</option>
+        </select>
+      </div>
+
+      <div class="form-group"><label class="form-label">Contact Number</label><input class="form-input" name="contact_number" value="{{ $player->contact_number }}"/></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:8px">Update Student</button>
+    </form>
+  </div>
 </div>
 
 @endsection

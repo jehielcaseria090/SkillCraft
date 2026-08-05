@@ -87,7 +87,6 @@
       <div class="form-group"><label class="form-label">Username</label><input class="form-input" name="username" required/></div>
 
       @if($scopedStrand)
-        {{-- Teacher: strand is locked to their own specialization, shown read-only --}}
         <div class="form-group">
           <label class="form-label">Strand</label>
           <input class="form-input" value="{{ $scopedStrand }}" disabled style="opacity:.6"/>

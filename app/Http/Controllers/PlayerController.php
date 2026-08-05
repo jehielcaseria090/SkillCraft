@@ -37,10 +37,6 @@ class PlayerController extends Controller
             });
         }
 
-        // NOTE: role filter dropdown in the old view (student/teacher) no
-        // longer applies here since this page is students-only now —
-        // teacher account management lives on its own page (Manage Teachers).
-
         $players = $query->paginate(20)->withQueryString();
 
         return view('admin.players', compact('players', 'scopedStrand'));
@@ -80,8 +76,6 @@ class PlayerController extends Controller
             'enrolled_strand'=> 'nullable|string',
         ]);
 
-        // Teacher: force-enroll into their own strand regardless of what
-        // was posted, so they can never enroll a student elsewhere.
         $enrolledStrand = $scopedStrand ?: $request->enrolled_strand;
 
         User::create([
@@ -122,11 +116,10 @@ class PlayerController extends Controller
         $data = $request->only('first_name', 'last_name', 'email', 'contact_number');
         $data['name'] = $request->first_name . ' ' . $request->last_name;
 
-        // Teacher can never move a student OUT of their own strand via edit.
         if ($scopedStrand) {
             $data['enrolled_strand'] = $scopedStrand;
-        } elseif ($request->filled('enrolled_strand')) {
-            $data['enrolled_strand'] = $request->enrolled_strand;
+        } else {
+            $data['enrolled_strand'] = $request->input('enrolled_strand');
         }
 
         $player->update($data);
