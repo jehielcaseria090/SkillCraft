@@ -58,7 +58,7 @@ class PlayerController extends Controller
 
         $assessments = $player->assessments()->with('mission.module.strand')->get();
 
-        return view('admin.players-detail', compact('player', 'assessments'));
+        return view('admin.player-detail', compact('player', 'assessments'));
     }
 
     /**
