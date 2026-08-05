@@ -472,11 +472,11 @@ tbody td {
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       Live Monitoring
     </a>
-    @if(session('admin_role') === 'admin')
     <a href="{{ route('players.index') }}" class="nav-item {{ request()->routeIs('players*') ? 'active' : '' }}">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Players
+      {{ session('admin_role') === 'admin' ? 'Players' : 'My Students' }}
     </a>
+    @if(session('admin_role') === 'admin')
     <a href="{{ route('teachers.index') }}" class="nav-item {{ request()->routeIs('teachers*') ? 'active' : '' }}">
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg>
       Manage Teachers

@@ -25,7 +25,8 @@ class User extends Authenticatable implements FilamentUser
         'password_hash',
         'confirm_password_hash',
         'role',
-        'specialization',
+        'specialization',    // teacher's own specialization: ict/smaw/cookery
+        'enrolled_strand',   // student's strand_name, e.g. 'ICT' — set at creation
         'profile_picture',
         'contact_number',
     ];
@@ -76,6 +77,27 @@ class User extends Authenticatable implements FilamentUser
             'cookery' => 'Home Economics',
             default   => null,
         };
+    }
+
+    /**
+     * True if this student is within the given teacher-scoped strand name,
+     * either because they were explicitly enrolled there by a teacher, or
+     * because they've actually played a mission belonging to that strand
+     * (covers students who self-registered via Unity with no enrollment tag).
+     */
+    public function isInScopedStrand(?string $scopedStrand): bool
+    {
+        if (!$scopedStrand) {
+            return true; // admin — no restriction
+        }
+
+        if ($this->enrolled_strand === $scopedStrand) {
+            return true;
+        }
+
+        return $this->assessments()
+            ->whereHas('mission.module.strand', fn($q) => $q->where('strand_name', $scopedStrand))
+            ->exists();
     }
 
     // ─── Relationships ────────────────────────────────────────────────
